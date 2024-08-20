@@ -3,6 +3,9 @@ import {RemovalPolicy} from 'aws-cdk-lib';
 import {Construct} from 'constructs';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as s3 from 'aws-cdk-lib/aws-s3';
+import * as events from 'aws-cdk-lib/aws-events';
+import * as targets from 'aws-cdk-lib/aws-events-targets';
+import {ServicePrincipal} from "aws-cdk-lib/aws-iam";
 
 require('dotenv').config({
   path: ['.env.common', '.env.erste', '.env.otp']
@@ -22,6 +25,7 @@ const DEFAULT_YNABBER_ENV_VARS = {
 }
 
 const LAMBDA_TIMEOUT_SEC: number = 30;
+const INVOKE_LAMBDA_SCHEDULE_HOURS: number = 6;
 
 export class YnabSyncAwsStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -69,9 +73,21 @@ export class YnabSyncAwsStack extends cdk.Stack {
 
     ynabberBucket.grantRead(ynabberOtpLambda);
 
-    // example resource
-    // const queue = new sqs.Queue(this, 'YnabSyncAwsQueue', {
-    //   visibilityTimeout: cdk.Duration.seconds(300)
-    // });
+    const invokeLambdaRule = new events.Rule(this, 'InvokeLambdaSchedule', {
+      schedule: events.Schedule.rate(cdk.Duration.hours(INVOKE_LAMBDA_SCHEDULE_HOURS)),
+    });
+
+    invokeLambdaRule.addTarget(new targets.LambdaFunction(ynabberOtpLambda));
+    invokeLambdaRule.addTarget(new targets.LambdaFunction(ynabberErsteLambda));
+
+    ynabberOtpLambda.addPermission('InvokeByEventBridge', {
+      principal: new ServicePrincipal('events.amazonaws.com'),
+      sourceArn: invokeLambdaRule.ruleArn,
+    });
+
+    ynabberErsteLambda.addPermission('InvokeByEventBridge', {
+      principal: new ServicePrincipal('events.amazonaws.com'),
+      sourceArn: invokeLambdaRule.ruleArn,
+    });
   }
 }
