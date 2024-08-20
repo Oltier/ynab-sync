@@ -1,6 +1,8 @@
 import * as cdk from 'aws-cdk-lib';
-import { Construct } from 'constructs';
+import {RemovalPolicy} from 'aws-cdk-lib';
+import {Construct} from 'constructs';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
+import * as s3 from 'aws-cdk-lib/aws-s3';
 
 require('dotenv').config({
   path: ['.env.common', '.env.erste', '.env.otp']
@@ -17,14 +19,21 @@ const DEFAULT_YNABBER_ENV_VARS = {
   YNAB_CLEARED: process.env.YNAB_CLEARED!,
   YNAB_TOKEN: process.env.YNAB_TOKEN!,
   NORGIDEN_REQUISITION_FILE_STORAGE: process.env.NORGIDEN_REQUISITION_FILE_STORAGE!,
-  NORDIGEN_REQUISITION_S3_BUCKET_NAME: process.env.NORDIGEN_REQUISITION_S3_BUCKET_NAME!,
 }
+
+const LAMBDA_TIMEOUT_SEC: number = 30;
 
 export class YnabSyncAwsStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
     // The code that defines your stack goes here
+
+    const ynabberBucket = new s3.Bucket(this, 'ynabber', {
+      bucketName: 'ynabber',
+      autoDeleteObjects: false,
+      removalPolicy: RemovalPolicy.RETAIN,
+    });
 
 
     // Build the lambda with GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -o bootstrap cmd/ynabber/main.go
@@ -37,8 +46,12 @@ export class YnabSyncAwsStack extends cdk.Stack {
         ...DEFAULT_YNABBER_ENV_VARS,
         NORDIGEN_BANKID: process.env.ERSTE_NORDIGEN_BANKID!,
         YNAB_ACCOUNTMAP: process.env.ERSTE_YNAB_ACCOUNTMAP!,
-      }
+        NORDIGEN_REQUISITION_S3_BUCKET_NAME: ynabberBucket.bucketName,
+      },
+      timeout: cdk.Duration.seconds(LAMBDA_TIMEOUT_SEC),
     });
+
+    ynabberBucket.grantRead(ynabberErsteLambda);
 
     const ynabberOtpLambda = new lambda.Function(this, "YnabberOtpLambda", {
       code: lambda.Code.fromAsset("lambdas"),
@@ -49,8 +62,12 @@ export class YnabSyncAwsStack extends cdk.Stack {
         ...DEFAULT_YNABBER_ENV_VARS,
         NORDIGEN_BANKID: process.env.OTP_NORDIGEN_BANKID!,
         YNAB_ACCOUNTMAP: process.env.OTP_YNAB_ACCOUNTMAP!,
-      }
+        NORDIGEN_REQUISITION_S3_BUCKET_NAME: ynabberBucket.bucketName,
+      },
+      timeout: cdk.Duration.seconds(LAMBDA_TIMEOUT_SEC),
     });
+
+    ynabberBucket.grantRead(ynabberOtpLambda);
 
     // example resource
     // const queue = new sqs.Queue(this, 'YnabSyncAwsQueue', {
