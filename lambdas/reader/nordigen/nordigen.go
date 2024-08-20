@@ -50,8 +50,8 @@ func payeeStripNonAlphanumeric(payee string) (x string) {
 	return strings.TrimSpace(x)
 }
 
-func (r Reader) toYnabber(a ynabber.Account, t nordigen.Transaction) (ynabber.Transaction, error) {
-	transaction, err := r.Mapper().Map(a, t)
+func (r Reader) toYnabber(a ynabber.Account, t nordigen.Transaction, state ynabber.TransactionState) (ynabber.Transaction, error) {
+	transaction, err := r.Mapper().Map(a, t, state)
 	if err != nil {
 		return ynabber.Transaction{}, err
 	}
@@ -65,9 +65,10 @@ func (r Reader) toYnabber(a ynabber.Account, t nordigen.Transaction) (ynabber.Tr
 }
 
 func (r Reader) toYnabbers(a ynabber.Account, t nordigen.AccountTransactions) ([]ynabber.Transaction, error) {
-	y := []ynabber.Transaction{}
+	var y []ynabber.Transaction
+	log.Printf("Fetched %d booked transactions", len(t.Transactions.Booked))
 	for _, v := range t.Transactions.Booked {
-		transaction, err := r.toYnabber(a, v)
+		transaction, err := r.toYnabber(a, v, ynabber.Booked)
 		if err != nil {
 			return nil, err
 		}
@@ -75,6 +76,17 @@ func (r Reader) toYnabbers(a ynabber.Account, t nordigen.AccountTransactions) ([
 		// Append transaction
 		y = append(y, transaction)
 	}
+
+	log.Printf("Fetched %d booked transactions", len(t.Transactions.Pending))
+	for _, v := range t.Transactions.Pending {
+		transaction, err := r.toYnabber(a, v, ynabber.Pending)
+		if err != nil {
+			return nil, err
+		}
+
+		y = append(y, transaction)
+	}
+
 	return y, nil
 }
 

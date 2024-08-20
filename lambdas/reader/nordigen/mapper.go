@@ -11,7 +11,7 @@ import (
 )
 
 type Mapper interface {
-	Map(ynabber.Account, nordigen.Transaction) (ynabber.Transaction, error)
+	Map(ynabber.Account, nordigen.Transaction, ynabber.TransactionState) (ynabber.Transaction, error)
 }
 
 // Mapper returns a mapper to transform the banks transaction to Ynabber
@@ -71,7 +71,7 @@ type Default struct {
 }
 
 // Map t using the default mapper
-func (mapper Default) Map(a ynabber.Account, t nordigen.Transaction) (ynabber.Transaction, error) {
+func (mapper Default) Map(a ynabber.Account, t nordigen.Transaction, state ynabber.TransactionState) (ynabber.Transaction, error) {
 	amount, err := parseAmount(t)
 	if err != nil {
 		return ynabber.Transaction{}, err
@@ -131,12 +131,13 @@ func (mapper Default) Map(a ynabber.Account, t nordigen.Transaction) (ynabber.Tr
 	}
 
 	return ynabber.Transaction{
-		Account: a,
-		ID:      ynabber.ID(id),
-		Date:    date,
-		Payee:   ynabber.Payee(payee),
-		Memo:    t.RemittanceInformationUnstructured,
-		Amount:  ynabber.MilliunitsFromAmount(amount),
+		Account:          a,
+		ID:               ynabber.ID(id),
+		Date:             date,
+		Payee:            ynabber.Payee(payee),
+		Memo:             t.RemittanceInformationUnstructured,
+		Amount:           ynabber.MilliunitsFromAmount(amount),
+		TransactionState: state,
 	}, nil
 }
 
@@ -144,7 +145,7 @@ func (mapper Default) Map(a ynabber.Account, t nordigen.Transaction) (ynabber.Tr
 type Nordea struct{}
 
 // Map t using the Nordea mapper
-func (mapper Nordea) Map(a ynabber.Account, t nordigen.Transaction) (ynabber.Transaction, error) {
+func (mapper Nordea) Map(a ynabber.Account, t nordigen.Transaction, state ynabber.TransactionState) (ynabber.Transaction, error) {
 	amount, err := parseAmount(t)
 	if err != nil {
 		return ynabber.Transaction{}, err

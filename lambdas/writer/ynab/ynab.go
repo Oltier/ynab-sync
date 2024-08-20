@@ -24,16 +24,24 @@ type Writer struct {
 
 var space = regexp.MustCompile(`\s+`) // Matches all whitespace characters
 
+type YTransactionState string
+
+const (
+	Cleared    YTransactionState = "cleared"
+	Uncleared  YTransactionState = "uncleared"
+	Reconciled YTransactionState = "reconciled"
+)
+
 // Ytransaction is a single YNAB transaction
 type Ytransaction struct {
-	AccountID string `json:"account_id"`
-	Date      string `json:"date"`
-	Amount    string `json:"amount"`
-	PayeeName string `json:"payee_name"`
-	Memo      string `json:"memo"`
-	ImportID  string `json:"import_id"`
-	Cleared   string `json:"cleared"`
-	Approved  bool   `json:"approved"`
+	AccountID string            `json:"account_id"`
+	Date      string            `json:"date"`
+	Amount    string            `json:"amount"`
+	PayeeName string            `json:"payee_name"`
+	Memo      string            `json:"memo"`
+	ImportID  string            `json:"import_id"`
+	Cleared   YTransactionState `json:"cleared"`
+	Approved  bool              `json:"approved"`
 }
 
 // Ytransactions is multiple YNAB transactions
@@ -62,6 +70,7 @@ func makeID(cfg ynabber.Config, t ynabber.Transaction) string {
 		[]byte(t.ID),
 		[]byte(date),
 		[]byte(amount),
+		[]byte(t.TransactionState),
 	}
 	hash := sha256.Sum256(bytes.Join(s, []byte("")))
 	return fmt.Sprintf("YBBRTZ:%x", hash)[:32]
@@ -101,6 +110,11 @@ func ynabberToYNAB(cfg ynabber.Config, t ynabber.Transaction) (Ytransaction, err
 		}
 	}
 
+	cleared := Uncleared
+	if t.TransactionState == ynabber.Booked {
+		cleared = Cleared
+	}
+
 	return Ytransaction{
 		ImportID:  makeID(cfg, t),
 		AccountID: accountID,
@@ -108,7 +122,7 @@ func ynabberToYNAB(cfg ynabber.Config, t ynabber.Transaction) (Ytransaction, err
 		Amount:    t.Amount.String(),
 		PayeeName: payee,
 		Memo:      memo,
-		Cleared:   cfg.YNAB.Cleared,
+		Cleared:   cleared,
 		Approved:  false,
 	}, nil
 }

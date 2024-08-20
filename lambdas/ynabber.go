@@ -45,14 +45,22 @@ func (m Milliunits) Negate() Milliunits {
 	return m * -1
 }
 
+type TransactionState string
+
+const (
+	Booked  TransactionState = "booked"
+	Pending TransactionState = "pending"
+)
+
 type Transaction struct {
 	Account Account `json:"account"`
 	ID      ID      `json:"id"`
 	// Date is the date of the transaction in UTC time
-	Date   time.Time  `json:"date"`
-	Payee  Payee      `json:"payee"`
-	Memo   string     `json:"memo"`
-	Amount Milliunits `json:"amount"`
+	Date             time.Time        `json:"date"`
+	Payee            Payee            `json:"payee"`
+	Memo             string           `json:"memo"`
+	Amount           Milliunits       `json:"amount"`
+	TransactionState TransactionState `json:"transactionState"`
 }
 
 func (m Milliunits) String() string {

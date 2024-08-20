@@ -116,12 +116,6 @@ type YNAB struct {
 	// example: 2006-01-02
 	FromDate Date `envconfig:"YNAB_FROM_DATE"`
 
-	// Set cleared status, possible values: cleared, uncleared, reconciled .
-	// Default is uncleared for historical reasons but recommend setting this
-	// to cleared because ynabber transactions are cleared by bank.
-	// They'd still be unapproved until approved in YNAB.
-	Cleared string `envconfig:"YNAB_CLEARED" default:"uncleared"`
-
 	// SwapFlow changes inflow to outflow and vice versa for any account with a
 	// IBAN number in the list. This maybe be relevant for credit card accounts.
 	//

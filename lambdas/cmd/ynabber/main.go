@@ -12,7 +12,6 @@ import (
 	"github.com/martinohansen/ynabber/writer/ynab"
 	"log"
 	"os"
-	"strings"
 )
 
 type MyEvent struct {
@@ -27,14 +26,6 @@ func HandleLambdaRequest(ctx context.Context, event *MyEvent) (*string, error) {
 	err := envconfig.Process("", &cfg)
 	if err != nil {
 		log.Fatal(err.Error())
-	}
-
-	// Check that some values are valid
-	cfg.YNAB.Cleared = strings.ToLower(cfg.YNAB.Cleared)
-	if cfg.YNAB.Cleared != "cleared" &&
-		cfg.YNAB.Cleared != "uncleared" &&
-		cfg.YNAB.Cleared != "reconciled" {
-		log.Fatal("YNAB_CLEARED must be one of cleared, uncleared or reconciled")
 	}
 
 	if cfg.Debug {
