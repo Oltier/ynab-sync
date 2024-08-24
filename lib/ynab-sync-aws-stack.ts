@@ -26,7 +26,6 @@ const DEFAULT_YNABBER_ENV_VARS = {
 
 const LAMBDA_TIMEOUT_SEC: number = 30;
 const INVOKE_OTP_LAMBDA_SCHEDULE_HOURS: number = 6;
-const INVOKE_ERSTE_LAMBDA_SCHEDULE_HOURS: number = 12;
 
 export class YnabSyncAwsStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -76,14 +75,13 @@ export class YnabSyncAwsStack extends cdk.Stack {
 
     const invokeOtpLambdaRule = new events.Rule(this, 'InvokeOtpLambdaSchedule', {
       schedule: events.Schedule.rate(cdk.Duration.hours(INVOKE_OTP_LAMBDA_SCHEDULE_HOURS)),
+      targets: [new targets.LambdaFunction(ynabberOtpLambda)],
     });
-
-    invokeOtpLambdaRule.addTarget(new targets.LambdaFunction(ynabberOtpLambda));
 
     const invokeErsteLambdaRule = new events.Rule(this, 'InvokeErsteLambdaSchedule', {
-      schedule: events.Schedule.rate(cdk.Duration.hours(INVOKE_ERSTE_LAMBDA_SCHEDULE_HOURS)),
+      schedule: events.Schedule.cron({hour: '7,19', minute: '0'}),
+      targets: [new targets.LambdaFunction(ynabberErsteLambda)],
     });
-    invokeErsteLambdaRule.addTarget(new targets.LambdaFunction(ynabberErsteLambda));
 
     ynabberOtpLambda.addPermission('InvokeByEventBridgeOtp', {
       principal: new ServicePrincipal('events.amazonaws.com'),
