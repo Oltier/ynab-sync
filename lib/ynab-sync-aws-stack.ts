@@ -40,6 +40,7 @@ export class YnabSyncAwsStack extends cdk.Stack {
       bucketName: 'ynabber',
       autoDeleteObjects: false,
       removalPolicy: RemovalPolicy.RETAIN,
+      versioned: true,
     });
 
 
