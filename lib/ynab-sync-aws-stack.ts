@@ -5,6 +5,9 @@ import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as events from 'aws-cdk-lib/aws-events';
 import * as targets from 'aws-cdk-lib/aws-events-targets';
+import * as sns from 'aws-cdk-lib/aws-sns';
+import * as cloudWatch from 'aws-cdk-lib/aws-cloudwatch';
+import * as cloudWatchActions from 'aws-cdk-lib/aws-cloudwatch-actions';
 import {ServicePrincipal} from "aws-cdk-lib/aws-iam";
 
 require('dotenv').config({
@@ -92,5 +95,54 @@ export class YnabSyncAwsStack extends cdk.Stack {
       principal: new ServicePrincipal('events.amazonaws.com'),
       sourceArn: invokeErsteLambdaRule.ruleArn,
     });
+
+
+    const errorTopic = new sns.Topic(this, 'YnabErrorTopic', {
+      displayName: 'YnabErrorTopic',
+    });
+
+    const emailSubscription = new sns.Subscription(this, 'YnabErrorEmailSubscription', {
+      topic: errorTopic,
+      protocol: sns.SubscriptionProtocol.EMAIL,
+      endpoint: process.env.EMAIL!,
+    });
+
+    const alarmAction = new cloudWatchActions.SnsAction(errorTopic);
+
+    const ersteErrorMonitor = new cloudWatch.Alarm(this, 'ErsteErrorMonitor', {
+      metric: new cloudWatch.Metric({
+        namespace: 'AWS/Lambda',
+        metricName: 'Errors',
+        dimensionsMap: {
+          FunctionName: ynabberErsteLambda.functionName,
+        },
+        period: cdk.Duration.minutes(5),
+        statistic: 'Sum'
+      }),
+      threshold: 0,
+      evaluationPeriods: 1,
+      comparisonOperator: cloudWatch.ComparisonOperator.GREATER_THAN_THRESHOLD,
+      actionsEnabled: true
+    });
+
+    ersteErrorMonitor.addAlarmAction(alarmAction);
+
+    const otpErrorMonitor = new cloudWatch.Alarm(this, 'OtpErrorMonitor', {
+      metric: new cloudWatch.Metric({
+        namespace: 'AWS/Lambda',
+        metricName: 'Errors',
+        dimensionsMap: {
+          FunctionName: ynabberOtpLambda.functionName,
+        },
+        period: cdk.Duration.minutes(5),
+        statistic: 'Sum'
+      }),
+      threshold: 0,
+      evaluationPeriods: 1,
+      comparisonOperator: cloudWatch.ComparisonOperator.GREATER_THAN_THRESHOLD,
+      actionsEnabled: true
+    });
+
+    otpErrorMonitor.addAlarmAction(alarmAction);
   }
 }
