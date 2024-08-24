@@ -49,6 +49,7 @@ export class YnabSyncAwsStack extends cdk.Stack {
       handler: "bootstrap",
       runtime: lambda.Runtime.PROVIDED_AL2023,
       architecture: lambda.Architecture.ARM_64,
+      retryAttempts: 0,
       environment: {
         ...DEFAULT_YNABBER_ENV_VARS,
         NORDIGEN_BANKID: process.env.ERSTE_NORDIGEN_BANKID!,
@@ -65,6 +66,7 @@ export class YnabSyncAwsStack extends cdk.Stack {
       handler: "bootstrap",
       runtime: lambda.Runtime.PROVIDED_AL2023,
       architecture: lambda.Architecture.ARM_64,
+      retryAttempts: 0,
       environment: {
         ...DEFAULT_YNABBER_ENV_VARS,
         NORDIGEN_BANKID: process.env.OTP_NORDIGEN_BANKID!,
