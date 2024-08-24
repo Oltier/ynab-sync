@@ -77,7 +77,7 @@ func (r Reader) toYnabbers(a ynabber.Account, t nordigen.AccountTransactions) ([
 		y = append(y, transaction)
 	}
 
-	log.Printf("Fetched %d booked transactions", len(t.Transactions.Pending))
+	log.Printf("Fetched %d pending transactions", len(t.Transactions.Pending))
 	for _, v := range t.Transactions.Pending {
 		transaction, err := r.toYnabber(a, v, ynabber.Pending)
 		if err != nil {

@@ -25,7 +25,8 @@ const DEFAULT_YNABBER_ENV_VARS = {
 }
 
 const LAMBDA_TIMEOUT_SEC: number = 30;
-const INVOKE_LAMBDA_SCHEDULE_HOURS: number = 6;
+const INVOKE_OTP_LAMBDA_SCHEDULE_HOURS: number = 6;
+const INVOKE_ERSTE_LAMBDA_SCHEDULE_HOURS: number = 12;
 
 export class YnabSyncAwsStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -73,21 +74,25 @@ export class YnabSyncAwsStack extends cdk.Stack {
 
     ynabberBucket.grantRead(ynabberOtpLambda);
 
-    const invokeLambdaRule = new events.Rule(this, 'InvokeLambdaSchedule', {
-      schedule: events.Schedule.rate(cdk.Duration.hours(INVOKE_LAMBDA_SCHEDULE_HOURS)),
+    const invokeOtpLambdaRule = new events.Rule(this, 'InvokeOtpLambdaSchedule', {
+      schedule: events.Schedule.rate(cdk.Duration.hours(INVOKE_OTP_LAMBDA_SCHEDULE_HOURS)),
     });
 
-    invokeLambdaRule.addTarget(new targets.LambdaFunction(ynabberOtpLambda));
-    invokeLambdaRule.addTarget(new targets.LambdaFunction(ynabberErsteLambda));
+    invokeOtpLambdaRule.addTarget(new targets.LambdaFunction(ynabberOtpLambda));
 
-    ynabberOtpLambda.addPermission('InvokeByEventBridge', {
+    const invokeErsteLambdaRule = new events.Rule(this, 'InvokeErsteLambdaSchedule', {
+      schedule: events.Schedule.rate(cdk.Duration.hours(INVOKE_ERSTE_LAMBDA_SCHEDULE_HOURS)),
+    });
+    invokeErsteLambdaRule.addTarget(new targets.LambdaFunction(ynabberErsteLambda));
+
+    ynabberOtpLambda.addPermission('InvokeByEventBridgeOtp', {
       principal: new ServicePrincipal('events.amazonaws.com'),
-      sourceArn: invokeLambdaRule.ruleArn,
+      sourceArn: invokeOtpLambdaRule.ruleArn,
     });
 
-    ynabberErsteLambda.addPermission('InvokeByEventBridge', {
+    ynabberErsteLambda.addPermission('InvokeByEventBridgeErste', {
       principal: new ServicePrincipal('events.amazonaws.com'),
-      sourceArn: invokeLambdaRule.ruleArn,
+      sourceArn: invokeErsteLambdaRule.ruleArn,
     });
   }
 }
