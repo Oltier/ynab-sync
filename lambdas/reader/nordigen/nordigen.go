@@ -43,11 +43,26 @@ func NewReader(cfg *ynabber.Config) Reader {
 	}
 }
 
-// payeeStripNonAlphanumeric removes all non-alphanumeric characters from payee
-func payeeStripNonAlphanumeric(payee string) (x string) {
+// sanitizePayee removes all non-alphanumeric characters from payee
+func sanitizePayee(payee string) (x string) {
+	if strings.Contains(payee, "xxxxxx") {
+		return strings.TrimSpace(extractPayee(payee))
+	}
 	reg := regexp.MustCompile(`[^\p{L}]+`)
 	x = reg.ReplaceAllString(payee, " ")
 	return strings.TrimSpace(x)
+}
+
+// 516050xxxxxx5888 Purchase/Vásárlás 2024.01.12 11:51:39 Terminal:S0158104 BUDAPEST   SPAR MAGYARORSZAG KFT. Eredeti össz/Orig amt: 2085.00HUF
+// Extract SPAR MAGYARORSZAG KFT. from the string above
+func extractPayee(payee string) (x string) {
+	splits := strings.Split(payee, "   ")
+	if len(splits) > 1 {
+		payee = splits[1]
+		splits = strings.Split(payee, " Eredeti")
+		payee = splits[0]
+	}
+	return payee
 }
 
 func (r Reader) toYnabber(a ynabber.Account, t nordigen.Transaction, state ynabber.TransactionState) (ynabber.Transaction, error) {

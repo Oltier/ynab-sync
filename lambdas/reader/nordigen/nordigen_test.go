@@ -129,19 +129,19 @@ func TestToYnabber(t *testing.T) {
 
 func TestPayeeStripNonAlphanumeric(t *testing.T) {
 	want := "Im just alphanumeric"
-	got := payeeStripNonAlphanumeric("Im just alphanumeric")
+	got := sanitizePayee("Im just alphanumeric")
 	if want != got {
 		t.Fatalf("alphanumeric: %s != %s", want, got)
 	}
 
 	want = "你好世界"
-	got = payeeStripNonAlphanumeric("你好世界")
+	got = sanitizePayee("你好世界")
 	if want != got {
 		t.Fatalf("non-english: %s != %s", want, got)
 	}
 
 	want = "Im not j ust alphanumeric"
-	got = payeeStripNonAlphanumeric("Im! not j.ust alphanumeric42 69")
+	got = sanitizePayee("Im! not j.ust alphanumeric42 69")
 	if want != got {
 		t.Fatalf("non-alphanumeric: %s != %s", want, got)
 	}

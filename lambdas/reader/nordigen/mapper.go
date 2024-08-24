@@ -94,7 +94,7 @@ func (mapper Default) Map(a ynabber.Account, t nordigen.Transaction, state ynabb
 				// Unstructured data may need some formatting, some banks
 				// inserts the amount and date which will cause every
 				// transaction to create a new Payee
-				payee = payeeStripNonAlphanumeric(payee)
+				payee = sanitizePayee(payee)
 
 			// Name is using either creditor or debtor as the payee
 			case "name":
@@ -159,7 +159,7 @@ func (mapper Nordea) Map(a ynabber.Account, t nordigen.Transaction, state ynabbe
 		Account: a,
 		ID:      ynabber.ID(t.InternalTransactionId),
 		Date:    date,
-		Payee:   ynabber.Payee(payeeStripNonAlphanumeric(t.RemittanceInformationUnstructured)),
+		Payee:   ynabber.Payee(sanitizePayee(t.RemittanceInformationUnstructured)),
 		Memo:    t.RemittanceInformationUnstructured,
 		Amount:  ynabber.MilliunitsFromAmount(amount),
 	}, nil
