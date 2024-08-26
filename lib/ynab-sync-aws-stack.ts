@@ -28,7 +28,8 @@ const DEFAULT_YNABBER_ENV_VARS = {
 }
 
 const LAMBDA_TIMEOUT_SEC: number = 30;
-const INVOKE_OTP_LAMBDA_SCHEDULE_HOURS: number = 1;
+// 24 HOURS / 10 INVOCATIONS
+const INVOKE_OTP_LAMBDA_SCHEDULE_MINUTES: number = 144;
 
 export class YnabSyncAwsStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -81,7 +82,7 @@ export class YnabSyncAwsStack extends cdk.Stack {
     ynabberBucket.grantRead(ynabberOtpLambda);
 
     const invokeOtpLambdaRule = new events.Rule(this, 'InvokeOtpLambdaSchedule', {
-      schedule: events.Schedule.rate(cdk.Duration.hours(INVOKE_OTP_LAMBDA_SCHEDULE_HOURS)),
+      schedule: events.Schedule.rate(cdk.Duration.minutes(INVOKE_OTP_LAMBDA_SCHEDULE_MINUTES)),
       targets: [new targets.LambdaFunction(ynabberOtpLambda)],
     });
 
