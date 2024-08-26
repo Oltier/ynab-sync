@@ -10,6 +10,8 @@ import (
 	"github.com/martinohansen/ynabber"
 )
 
+var dateExtractor = regexp.MustCompile(`\d{4}\.\d{2}/.\d{2}`)
+
 type Mapper interface {
 	Map(ynabber.Account, nordigen.Transaction, ynabber.TransactionState) (ynabber.Transaction, error)
 }
@@ -39,8 +41,7 @@ func parseAmount(t nordigen.Transaction) (float64, error) {
 func parseDate(t nordigen.Transaction) (time.Time, error) {
 	valueDate, valueDateErr := time.Parse("2006-01-02", t.ValueDate)
 	bookingDate, bookingDateErr := time.Parse("2006-01-02", t.BookingDate)
-	re := regexp.MustCompile(`^\d{4}\.\d{2}\.\d{2}`)
-	remittanceDateString := re.FindString(t.RemittanceInformationUnstructured)
+	remittanceDateString := dateExtractor.FindString(t.RemittanceInformationUnstructured)
 	remittanceDate, remittanceDateErr := time.Parse("2006.01.02", remittanceDateString)
 
 	// Handle parsing errors
