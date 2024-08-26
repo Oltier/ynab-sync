@@ -2,6 +2,7 @@ package nordigen
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -144,7 +145,13 @@ func (r Reader) Bulk() (t []ynabber.Transaction, err error) {
 		}
 
 		if r.Config.Debug {
-			log.Printf("Transactions received from Nordigen: %+v", transactions)
+			transactionsJson, err := json.Marshal(transactions)
+			if err != nil {
+				log.Printf("Failed to marshal transactions: %s", err)
+				log.Printf("Transactions received from Nordigen: %+v", transactions)
+			} else {
+				log.Printf("Transactions received from Nordigen JSON: %+v", transactionsJson)
+			}
 		}
 
 		x, err := r.toYnabbers(account, transactions)

@@ -56,6 +56,7 @@ export class YnabSyncAwsStack extends cdk.Stack {
         NORDIGEN_BANKID: process.env.ERSTE_NORDIGEN_BANKID!,
         YNAB_ACCOUNTMAP: process.env.ERSTE_YNAB_ACCOUNTMAP!,
         NORDIGEN_REQUISITION_S3_BUCKET_NAME: ynabberBucket.bucketName,
+        YNABBER_DEBUG: 'true',
       },
       timeout: cdk.Duration.seconds(LAMBDA_TIMEOUT_SEC),
     });

@@ -135,17 +135,18 @@ func (w Writer) validTransaction(date time.Time) bool {
 		!date.After(time.Now())
 }
 
-func (w Writer) Bulk(t []ynabber.Transaction) error {
+func (w Writer) Bulk(transactions []ynabber.Transaction) error {
 	// skipped and failed counters
 	skipped := 0
 	failed := 0
 
 	// Build array of transactions to send to YNAB
 	y := new(Ytransactions)
-	for _, v := range t {
+	for _, v := range transactions {
 
 		// Skip transactions that are not within the valid date range.
 		if !w.validTransaction(v.Date) {
+			log.Printf("Transaction outside valid date range: %+v", v)
 			skipped += 1
 			continue
 		}
@@ -161,7 +162,7 @@ func (w Writer) Bulk(t []ynabber.Transaction) error {
 		y.Transactions = append(y.Transactions, transaction)
 	}
 
-	if len(t) == 0 || len(y.Transactions) == 0 {
+	if len(transactions) == 0 || len(y.Transactions) == 0 {
 		log.Println("No transactions to write")
 		return nil
 	}
