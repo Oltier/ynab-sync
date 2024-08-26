@@ -131,12 +131,18 @@ func (mapper Default) Map(a ynabber.Account, t nordigen.Transaction, state ynabb
 		return ynabber.Transaction{}, fmt.Errorf("unrecognized TransactionID: %s", mapper.TransactionID)
 	}
 
+	memo := t.RemittanceInformationUnstructured
+
+	if state == ynabber.Pending {
+		memo = fmt.Sprintf("PENDING %s", memo)
+	}
+
 	return ynabber.Transaction{
 		Account:          a,
 		ID:               ynabber.ID(id),
 		Date:             date,
 		Payee:            ynabber.Payee(payee),
-		Memo:             t.RemittanceInformationUnstructured,
+		Memo:             memo,
 		Amount:           ynabber.MilliunitsFromAmount(amount),
 		TransactionState: state,
 	}, nil
