@@ -150,7 +150,7 @@ func (r Reader) Bulk() (t []ynabber.Transaction, err error) {
 				log.Printf("Failed to marshal transactions: %s", err)
 				log.Printf("Transactions received from Nordigen: %+v", transactions)
 			} else {
-				log.Printf("Transactions received from Nordigen JSON: %+v", transactionsJson)
+				log.Printf("Transactions received from Nordigen JSON: %s", string(transactionsJson))
 			}
 		}
 
