@@ -87,7 +87,7 @@ export class YnabSyncAwsStack extends cdk.Stack {
     });
 
     const invokeErsteLambdaRule = new events.Rule(this, 'InvokeErsteLambdaSchedule', {
-      schedule: events.Schedule.cron({hour: '7,19', minute: '0'}),
+      schedule: events.Schedule.cron({hour: '5,19', minute: '0'}),
       targets: [new targets.LambdaFunction(ynabberErsteLambda)],
     });
 
