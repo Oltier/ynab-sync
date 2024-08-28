@@ -28,8 +28,10 @@ const DEFAULT_YNABBER_ENV_VARS = {
 }
 
 const LAMBDA_TIMEOUT_SEC: number = 30;
-// 24 HOURS / 10 INVOCATIONS
-const INVOKE_OTP_LAMBDA_SCHEDULE_MINUTES: number = 144;
+
+// 10 INVOCATIONS / 24 HOURS
+const OTP_CALLS_PER_DAY: number = 10;
+const INVOKE_OTP_LAMBDA_SCHEDULE_MINUTES: number = 24 * 60 / (OTP_CALLS_PER_DAY - 1);
 
 export class YnabSyncAwsStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
