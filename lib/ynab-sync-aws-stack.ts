@@ -123,7 +123,7 @@ export class YnabSyncAwsStack extends cdk.Stack {
         dimensionsMap: {
           FunctionName: ynabberErsteLambda.functionName,
         },
-        period: cdk.Duration.days(1),
+        period: cdk.Duration.minutes(5),
         statistic: 'Sum'
       }),
       threshold: 0,
@@ -141,7 +141,7 @@ export class YnabSyncAwsStack extends cdk.Stack {
         dimensionsMap: {
           FunctionName: ynabberOtpLambda.functionName,
         },
-        period: cdk.Duration.days(1),
+        period: cdk.Duration.minutes(5),
         statistic: 'Sum'
       }),
       threshold: 0,
