@@ -88,20 +88,20 @@ export class YnabSyncAwsStack extends cdk.Stack {
       targets: [new targets.LambdaFunction(ynabberOtpLambda)],
     });
 
-    const invokeErsteLambdaRule = new events.Rule(this, 'InvokeErsteLambdaSchedule', {
-      schedule: events.Schedule.cron({hour: '5,19', minute: '0'}),
-      targets: [new targets.LambdaFunction(ynabberErsteLambda)],
-    });
+    // const invokeErsteLambdaRule = new events.Rule(this, 'InvokeErsteLambdaSchedule', {
+    //   schedule: events.Schedule.cron({hour: '5,19', minute: '0'}),
+    //   targets: [new targets.LambdaFunction(ynabberErsteLambda)],
+    // });
 
     ynabberOtpLambda.addPermission('InvokeByEventBridgeOtp', {
       principal: new ServicePrincipal('events.amazonaws.com'),
       sourceArn: invokeOtpLambdaRule.ruleArn,
     });
 
-    ynabberErsteLambda.addPermission('InvokeByEventBridgeErste', {
-      principal: new ServicePrincipal('events.amazonaws.com'),
-      sourceArn: invokeErsteLambdaRule.ruleArn,
-    });
+    // ynabberErsteLambda.addPermission('InvokeByEventBridgeErste', {
+    //   principal: new ServicePrincipal('events.amazonaws.com'),
+    //   sourceArn: invokeErsteLambdaRule.ruleArn,
+    // });
 
 
     const errorTopic = new sns.Topic(this, 'YnabErrorTopic', {
