@@ -101,6 +101,8 @@ export class YnabSyncAwsStack extends cdk.Stack {
       timeout: cdk.Duration.seconds(LAMBDA_TIMEOUT_SEC),
     });
 
+    ynabberBucket.grantRead(ynabberNordeaLambda);
+
     const invokeOtpLambdaRule = new events.Rule(this, 'InvokeOtpLambdaSchedule', {
       schedule: events.Schedule.rate(cdk.Duration.minutes(INVOKE_OTP_LAMBDA_SCHEDULE_MINUTES)),
       targets: [new targets.LambdaFunction(ynabberOtpLambda)],
