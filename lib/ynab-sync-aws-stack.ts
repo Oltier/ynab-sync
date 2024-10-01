@@ -55,7 +55,7 @@ const banks: BankConfig[] = [
     nordigenBankIdEnvVar: 'ERSTE_NORDIGEN_BANKID',
     ynabAccountMapEnvVar: 'ERSTE_YNAB_ACCOUNTMAP',
     schedule: events.Schedule.cron({hour: '5,19', minute: '0'}),
-    enabled: false, // Disabled since it's commented out in the original code
+    enabled: true, // Disabled since it's commented out in the original code
     extraEnv: {
       YNABBER_DEBUG: 'true',
     },
@@ -108,64 +108,64 @@ export class YnabSyncAwsStack extends cdk.Stack {
     const alarmAction = new cloudWatchActions.SnsAction(errorTopic);
 
     // Iterate over each bank configuration to create resources
-    banks.forEach((bank) => {
-      if (!bank.enabled) return;
+    banks
+      .filter((bank) => bank.enabled)
+      .forEach((bank) => {
+        const bankLambda = new lambda.Function(this, bank.lambdaId, {
+          code: lambda.Code.fromAsset('lambdas'),
+          handler: 'bootstrap',
+          runtime: lambda.Runtime.PROVIDED_AL2023,
+          architecture: lambda.Architecture.ARM_64,
+          retryAttempts: 0,
+          environment: {
+            ...DEFAULT_YNABBER_ENV_VARS,
+            NORDIGEN_BANKID: process.env[bank.nordigenBankIdEnvVar]!,
+            YNAB_ACCOUNTMAP: process.env[bank.ynabAccountMapEnvVar]!,
+            NORDIGEN_REQUISITION_S3_BUCKET_NAME: ynabberBucket.bucketName,
+            ...(bank.extraEnv || {}),
+          },
+          timeout: cdk.Duration.seconds(LAMBDA_TIMEOUT_SEC),
+        });
 
-      const bankLambda = new lambda.Function(this, bank.lambdaId, {
-        code: lambda.Code.fromAsset('lambdas'),
-        handler: 'bootstrap',
-        runtime: lambda.Runtime.PROVIDED_AL2023,
-        architecture: lambda.Architecture.ARM_64,
-        retryAttempts: 0,
-        environment: {
-          ...DEFAULT_YNABBER_ENV_VARS,
-          NORDIGEN_BANKID: process.env[bank.nordigenBankIdEnvVar]!,
-          YNAB_ACCOUNTMAP: process.env[bank.ynabAccountMapEnvVar]!,
-          NORDIGEN_REQUISITION_S3_BUCKET_NAME: ynabberBucket.bucketName,
-          ...(bank.extraEnv || {}),
-        },
-        timeout: cdk.Duration.seconds(LAMBDA_TIMEOUT_SEC),
+        ynabberBucket.grantRead(bankLambda);
+
+        const invokeLambdaRule = new events.Rule(
+          this,
+          `Invoke${bank.name}LambdaSchedule`,
+          {
+            schedule: bank.schedule,
+            targets: [new targets.LambdaFunction(bankLambda)],
+          }
+        );
+
+        bankLambda.addPermission(`InvokeByEventBridge${bank.name}`, {
+          principal: new ServicePrincipal('events.amazonaws.com'),
+          sourceArn: invokeLambdaRule.ruleArn,
+        });
+
+        // CloudWatch Alarm for Lambda errors
+        const errorMonitor = new cloudWatch.Alarm(
+          this,
+          `${bank.name}ErrorMonitor`,
+          {
+            metric: new cloudWatch.Metric({
+              namespace: 'AWS/Lambda',
+              metricName: 'Errors',
+              dimensionsMap: {
+                FunctionName: bankLambda.functionName,
+              },
+              period: cdk.Duration.minutes(5),
+              statistic: 'Sum',
+            }),
+            threshold: 0,
+            evaluationPeriods: 1,
+            comparisonOperator:
+            cloudWatch.ComparisonOperator.GREATER_THAN_THRESHOLD,
+            actionsEnabled: true,
+          }
+        );
+
+        errorMonitor.addAlarmAction(alarmAction);
       });
-
-      ynabberBucket.grantRead(bankLambda);
-
-      const invokeLambdaRule = new events.Rule(
-        this,
-        `Invoke${bank.name}LambdaSchedule`,
-        {
-          schedule: bank.schedule,
-          targets: [new targets.LambdaFunction(bankLambda)],
-        }
-      );
-
-      bankLambda.addPermission(`InvokeByEventBridge${bank.name}`, {
-        principal: new ServicePrincipal('events.amazonaws.com'),
-        sourceArn: invokeLambdaRule.ruleArn,
-      });
-
-      // CloudWatch Alarm for Lambda errors
-      const errorMonitor = new cloudWatch.Alarm(
-        this,
-        `${bank.name}ErrorMonitor`,
-        {
-          metric: new cloudWatch.Metric({
-            namespace: 'AWS/Lambda',
-            metricName: 'Errors',
-            dimensionsMap: {
-              FunctionName: bankLambda.functionName,
-            },
-            period: cdk.Duration.minutes(5),
-            statistic: 'Sum',
-          }),
-          threshold: 0,
-          evaluationPeriods: 1,
-          comparisonOperator:
-          cloudWatch.ComparisonOperator.GREATER_THAN_THRESHOLD,
-          actionsEnabled: true,
-        }
-      );
-
-      errorMonitor.addAlarmAction(alarmAction);
-    });
   }
 }
