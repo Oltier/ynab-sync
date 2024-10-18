@@ -129,19 +129,19 @@ export class YnabSyncAwsStack extends cdk.Stack {
 
         ynabberBucket.grantRead(bankLambda);
 
-        const invokeLambdaRule = new events.Rule(
-          this,
-          `Invoke${bank.name}LambdaSchedule`,
-          {
-            schedule: bank.schedule,
-            targets: [new targets.LambdaFunction(bankLambda)],
-          }
-        );
-
-        bankLambda.addPermission(`InvokeByEventBridge${bank.name}`, {
-          principal: new ServicePrincipal('events.amazonaws.com'),
-          sourceArn: invokeLambdaRule.ruleArn,
-        });
+        // const invokeLambdaRule = new events.Rule(
+      //   this,
+      //   `Invoke${bank.name}LambdaSchedule`,
+      //   {
+      //     schedule: bank.schedule,
+      //     targets: [new targets.LambdaFunction(bankLambda)],
+      //   }
+      // );
+      //
+        // bankLambda.addPermission(`InvokeByEventBridge${bank.name}`, {
+      //   principal: new ServicePrincipal('events.amazonaws.com'),
+      //   sourceArn: invokeLambdaRule.ruleArn,
+      // });
 
         // CloudWatch Alarm for Lambda errors
         const errorMonitor = new cloudWatch.Alarm(
